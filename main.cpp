@@ -124,15 +124,15 @@ int arp_or_ip(const u_char* packet){
 
 void* thread_atk(void* data){
     char errbuf[PCAP_ERRBUF_SIZE];
+    pcap_t* handle = pcap_open_live(dev, BUFSIZ, 1, 1, errbuf);
     while(true){
-        pcap_t* handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
         for(int i = 1; i <= pair_num; i++){
             pcap_sendpacket(handle, reinterpret_cast<const u_char*>(&packet_atk[i]), sizeof(EthArpPacket));
         }
-        pcap_close(handle);
         printf("thread arp atk \n");
         sleep(2);
-   }
+    }
+    pcap_close(handle);
 }
 
 int main(int argc, char* argv[]) {
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
 
     dev = argv[1];
 	char errbuf[PCAP_ERRBUF_SIZE];
-	pcap_t* handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
+    pcap_t* handle = pcap_open_live(dev, BUFSIZ, 1, 1, errbuf);
 	if (handle == nullptr) {
 		fprintf(stderr, "couldn't open device %s(%s)\n", dev, errbuf);
 		return -1;
@@ -298,9 +298,8 @@ int main(int argc, char* argv[]) {
         printf("sender %d attack success \n", i);
     }
     //at this point, we get (ip, mac) of (sender, target) and send arp-atk packet
-    int status;
     thr_id = pthread_create(&thread, NULL, thread_atk, NULL);
-    pthread_join(thread, (void **)status);
+
 
     while(true){
         struct pcap_pkthdr* header;
@@ -358,7 +357,6 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-
 	pcap_close(handle);
     return 0;
 
